@@ -17,7 +17,7 @@ nombre_archivo = '2021-04-12_1210_carga_horas_2020_FEVEL.xlsx'
 HORAS_TASK = np.array([255, 80, 70, 65, 30, 0])
 
 # meses en los cueles se imputan horas a las tareas
-MESES_IMPUTAR = [False, True, True, True, True, True, True, False, True, True, True, False]
+MESES_IMPUTAR = [False, True, True, True, True, True, True, False, True, True, True, True]
 
 # fijar la semilla del random permite reproducir siempre el mismo patrón aleatorio
 np.random.seed(123)
