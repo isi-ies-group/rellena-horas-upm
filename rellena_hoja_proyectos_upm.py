@@ -92,7 +92,7 @@ while horas_task_ahora.sum() > 0:
             
             if horas_libres_dia > 0 and horas_task_ahora[tarea-offset_columna_tarea] > 0:
                 hoja[f'{openpyxl.utils.get_column_letter(tarea)}{dia}'].value += MINIMA_CARGA_HORARIA
-                horas_task_ahora[tarea-offset_columna_tarea] -= 1
+                horas_task_ahora[tarea-offset_columna_tarea] -= MINIMA_CARGA_HORARIA
 
 #%% Guarda en copia
 nombre_partido = nombre_archivo.split('.')
