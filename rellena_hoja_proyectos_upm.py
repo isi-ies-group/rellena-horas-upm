@@ -81,14 +81,15 @@ np.random.shuffle(lista_filas_random)
 
 while horas_task_ahora.sum() > 0:
     for dia in lista_filas_random:
-        horas_proyectos_ahora = hoja[f'{COL_INI_TAREA}{dia}:{COL_FIN_TAREA}{dia}']
-        total_proyectos_ahora = sum([c.value for c in list(horas_proyectos_ahora[0])])
-        
-        total_otros_proyectos = hoja[f'{COL_OTRAS_TAREAS}{dia}'].value
-        
-        horas_libres_dia = HORAS_DIA_MAX - total_proyectos_ahora - total_otros_proyectos
-        
         for tarea in range(offset_columna_tarea, col_otras_idx):
+    
+            horas_proyectos_ahora = hoja[f'{COL_INI_TAREA}{dia}:{COL_FIN_TAREA}{dia}']
+            total_proyectos_ahora = sum([c.value for c in list(horas_proyectos_ahora[0])])
+            
+            total_otros_proyectos = hoja[f'{COL_OTRAS_TAREAS}{dia}'].value
+            
+            horas_libres_dia = HORAS_DIA_MAX - total_proyectos_ahora - total_otros_proyectos
+            
             if horas_libres_dia > 0 and horas_task_ahora[tarea-offset_columna_tarea] > 0:
                 hoja[f'{openpyxl.utils.get_column_letter(tarea)}{dia}'].value += MINIMA_CARGA_HORARIA
                 horas_task_ahora[tarea-offset_columna_tarea] -= 1
