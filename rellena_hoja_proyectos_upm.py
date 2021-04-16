@@ -13,7 +13,10 @@ import numpy as np
 nombre_archivo = 'fichero_prueba.xlsx'
 
 # horas anuales por tarea
-HORAS_TASK = np.array([255, 80, 70, 65, 30, 0])
+HORAS_TASK = np.array([0, 0, 12, 12, 24, 12, 0, 0, 0, 24, 12, 12, 12])
+
+# OJO han de ser floats (terminados con .0) se fuerza con astype()
+HORAS_TASK = HORAS_TASK.astype('float')
 
 # meses en los cueles se imputan horas a las tareas
 MESES_IMPUTAR = [False, True, True, True, True, True,
@@ -33,19 +36,21 @@ COL_FECHA = 'A'
 FILA_CABECERAS_TAREAS = '3'
 FILA_INI_TAREAS = '4'
 
+OFFSET_COLUMNA_TAREA = openpyxl.utils.column_index_from_string(COL_INI_TAREA)
+
 wb = openpyxl.load_workbook(nombre_archivo)
 
 hoja = wb[wb.sheetnames[0]]
 
-NUM_FILAS = len(hoja[COL_INI_TAREA])
+NUM_FILAS = len(hoja[COL_INI_TAREA]) - 1 # la última fila es de subtotales. Si se incluye se machaca al rellenar con 0s
 
 for celda in hoja[FILA_CABECERAS_TAREAS]:
     if celda.value == 'Otras actividades':
-        col_otras_idx = celda.col_idx
+        COL_OTRAS_IDX = celda.col_idx
 
-COL_OTRAS_TAREAS = openpyxl.utils.get_column_letter(col_otras_idx+2)
+COL_OTRAS_TAREAS = openpyxl.utils.get_column_letter(COL_OTRAS_IDX+2)
 
-COL_FIN_TAREA = openpyxl.utils.get_column_letter(col_otras_idx-1)
+COL_FIN_TAREA = openpyxl.utils.get_column_letter(COL_OTRAS_IDX-1)
 
 # %% Lee los días laborables
 lista_dias = []
@@ -66,11 +71,9 @@ if len(lista_horas_otros_proyectos)*HORAS_DIA_MAX - sum(lista_horas_otros_proyec
     raise SystemError('Más horas en tareas que horas disponibles!')
 
 # %% Inicializa a 0 todas las tareas de todos los días laborables
-offset_columna_tarea = openpyxl.utils.column_index_from_string(COL_INI_TAREA)
-
 for celda_dia in hoja[f'{COL_INI_TAREA}{FILA_INI_TAREAS}:B{NUM_FILAS}']:
     dia = celda_dia[0].row
-    for tarea in range(offset_columna_tarea, col_otras_idx):
+    for tarea in range(OFFSET_COLUMNA_TAREA, COL_OTRAS_IDX):
         hoja[f'{openpyxl.utils.get_column_letter(tarea)}{dia}'].value = 0
 
 # %% Rellena la hoja con horas en las tareas
@@ -82,20 +85,18 @@ np.random.shuffle(lista_filas_random)
 
 while horas_task_ahora.sum() > 0:
     for dia in lista_filas_random:
-        for tarea in range(offset_columna_tarea, col_otras_idx):
+        for tarea in range(OFFSET_COLUMNA_TAREA, COL_OTRAS_IDX):
 
             horas_proyectos_ahora = hoja[f'{COL_INI_TAREA}{dia}:{COL_FIN_TAREA}{dia}']
-            total_proyectos_ahora = sum(
-                [c.value for c in list(horas_proyectos_ahora[0])])
+            total_proyectos_ahora = sum([c.value for c in list(horas_proyectos_ahora[0])])
 
             total_otros_proyectos = hoja[f'{COL_OTRAS_TAREAS}{dia}'].value
 
             horas_libres_dia = HORAS_DIA_MAX - total_proyectos_ahora - total_otros_proyectos
 
-            if horas_libres_dia > 0 and horas_task_ahora[tarea-offset_columna_tarea] > 0:
+            if horas_libres_dia > 0 and horas_task_ahora[tarea-OFFSET_COLUMNA_TAREA] > 0:
                 hoja[f'{openpyxl.utils.get_column_letter(tarea)}{dia}'].value += MINIMA_CARGA_HORARIA
-                horas_task_ahora[tarea -
-                                 offset_columna_tarea] -= MINIMA_CARGA_HORARIA
+                horas_task_ahora[tarea-OFFSET_COLUMNA_TAREA] -= MINIMA_CARGA_HORARIA
 
 # %% Guarda en copia
 nombre_partido = nombre_archivo.split('.')
