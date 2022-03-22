@@ -22,6 +22,9 @@ HORAS_TASK = HORAS_TASK.astype('float')
 MESES_IMPUTAR = [False, True, True, True, True, True,
                  True, False, True, True, True, True]
 
+# días laborables a excluir
+DIAS_EXCLUIR = ['02/03/2020']
+
 # fijar la semilla del random permite reproducir siempre el mismo patrón aleatorio
 np.random.seed(123)
 
@@ -53,7 +56,7 @@ COL_OTRAS_TAREAS = openpyxl.utils.get_column_letter(COL_OTRAS_IDX+2)
 COL_FIN_TAREA = openpyxl.utils.get_column_letter(COL_OTRAS_IDX-1)
 
 # %% Lee los días laborables
-lista_dias = []
+# lista_dias = []
 lista_filas = []
 lista_horas_otros_proyectos = []
 
@@ -62,10 +65,11 @@ for dia in hoja[f'{COL_INI_TAREA}{FILA_INI_TAREAS}:B{NUM_FILAS}']:
         celda_fecha = hoja[COL_FECHA+str(celda.row)]
         if celda.fill.fgColor.indexed != COLOR_FESTIVO and celda_fecha.value is not None:
             if MESES_IMPUTAR[datetime.strptime(celda_fecha.value, '%d/%m/%Y').date().month - 1]:
-                lista_filas.append(celda_fecha.row)
-                lista_dias.append(celda_fecha.value)
-                lista_horas_otros_proyectos.append(
-                    hoja[f'{COL_OTRAS_TAREAS}{celda_fecha.row}'].value)
+                if celda_fecha.value not in DIAS_EXCLUIR:
+                    lista_filas.append(celda_fecha.row)
+                    # lista_dias.append(celda_fecha.value)
+                    lista_horas_otros_proyectos.append(
+                        hoja[f'{COL_OTRAS_TAREAS}{celda_fecha.row}'].value)
 
 if len(lista_horas_otros_proyectos)*HORAS_DIA_MAX - sum(lista_horas_otros_proyectos) < sum(HORAS_TASK):
     raise SystemError('Más horas en tareas que horas disponibles!')
