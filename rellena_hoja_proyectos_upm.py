@@ -22,8 +22,8 @@ HORAS_TASK = HORAS_TASK.astype('float')
 MESES_IMPUTAR = [False, True, True, True, True, True,
                  True, False, True, True, True, True]
 
-# días laborables a excluir
-DIAS_EXCLUIR = ['02/03/2020']
+# lista días laborables a excluir
+DIAS_EXCLUIR = ['02/03/2020', '03/03/2020']
 
 # fijar la semilla del random permite reproducir siempre el mismo patrón aleatorio
 np.random.seed(123)
