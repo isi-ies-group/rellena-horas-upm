@@ -6,30 +6,36 @@ Created on Tue Apr 13 14:09:09 2021
 """
 import openpyxl
 import openpyxl.utils
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 
 # %% ENTRADAS
 nombre_archivo = 'fichero_prueba.xlsx'
 
-# horas anuales por tarea
+# array de tamaño NUM_TAREAS indicando el número de horas de cada tarea a asignar
 HORAS_TASK = np.array([0, 0, 12, 12, 24, 12, 0, 0, 0, 24, 12, 12, 12])
-
-# OJO han de ser floats (terminados con .0) se fuerza con astype()
+# OJO han de ser floats (terminados con .0), se fuerza con astype()
 HORAS_TASK = HORAS_TASK.astype('float')
 
-# meses en los cueles se imputan horas a las tareas
-MESES_IMPUTAR = [False, True, True, True, True, True,
-                 True, False, True, True, True, True]
+# meses en los cuales se imputan horas a las tareas
+MESES_IMPUTAR = [True, True, True, True, True, True, True, True, True, True, True, True]
 
 # lista días laborables a excluir
-DIAS_EXCLUIR = ['02/03/2020', '03/03/2020']
+EXCLUYE_INI = '01/01/2020'
+EXCLUYE_FIN = '01/03/2020'
 
+exc_ini = datetime.strptime(EXCLUYE_INI, "%d/%m/%Y")
+exc_fin = datetime.strptime(EXCLUYE_FIN, "%d/%m/%Y")
+DIAS_EXCLUIR = [(exc_ini + timedelta(days=x)).strftime("%d/%m/%Y") for x in range(0, (exc_fin-exc_ini).days)]
+# DIAS_EXCLUIR = ['02/03/2020', '03/03/2020'] # excluir días sueltos
+
+# %% CONSTANTES
 # fijar la semilla del random permite reproducir siempre el mismo patrón aleatorio
 np.random.seed(123)
 
-# %% CONSTANTES
-COLOR_FESTIVO = 52
+COLOR_FESTIVO = 52 # MOSTAZA
+COLOR_BLOQUEADO = 10 # ROJO
+COLOR_DISPONIBLE = 9 # BLANCO
 
 HORAS_DIA_MAX = 7.5
 MINIMA_CARGA_HORARIA = 0.5
@@ -63,7 +69,7 @@ lista_horas_otros_proyectos = []
 for dia in hoja[f'{COL_INI_TAREA}{FILA_INI_TAREAS}:B{NUM_FILAS}']:
     for celda in dia:
         celda_fecha = hoja[COL_FECHA+str(celda.row)]
-        if celda.fill.fgColor.indexed != COLOR_FESTIVO and celda_fecha.value is not None:
+        if celda.fill.fgColor.indexed == COLOR_DISPONIBLE and celda_fecha.value is not None:
             if MESES_IMPUTAR[datetime.strptime(celda_fecha.value, '%d/%m/%Y').date().month - 1]:
                 if celda_fecha.value not in DIAS_EXCLUIR:
                     lista_filas.append(celda_fecha.row)
@@ -75,10 +81,11 @@ if len(lista_horas_otros_proyectos)*HORAS_DIA_MAX - sum(lista_horas_otros_proyec
     raise SystemError('Más horas en tareas que horas disponibles!')
 
 # %% Inicializa a 0 todas las tareas de todos los días laborables
-for celda_dia in hoja[f'{COL_INI_TAREA}{FILA_INI_TAREAS}:B{NUM_FILAS}']:
-    dia = celda_dia[0].row
-    for tarea in range(OFFSET_COLUMNA_TAREA, COL_OTRAS_IDX):
-        hoja[f'{openpyxl.utils.get_column_letter(tarea)}{dia}'].value = 0
+# OJO PONE A CERO DÍAS BLOQUEADAS QUE YA CONTUVIESEN DÍAS
+# for celda_dia in hoja[f'{COL_INI_TAREA}{FILA_INI_TAREAS}:B{NUM_FILAS}']:
+#     dia = celda_dia[0].row
+#     for tarea in range(OFFSET_COLUMNA_TAREA, COL_OTRAS_IDX):
+#         hoja[f'{openpyxl.utils.get_column_letter(tarea)}{dia}'].value = 0
 
 # %% Rellena la hoja con horas en las tareas
 horas_task_ahora = HORAS_TASK.copy()
@@ -104,8 +111,7 @@ while horas_task_ahora.sum() > 0:
 
 # %% Guarda en copia
 nombre_partido = nombre_archivo.split('.')
-nombre_archivo_relleno = nombre_partido[0] + \
-    '_relleno' + '.' + nombre_partido[1]
+nombre_archivo_relleno = nombre_partido[0] + '_relleno' + '.' + nombre_partido[1]
 
 wb.save(nombre_archivo_relleno)
 
