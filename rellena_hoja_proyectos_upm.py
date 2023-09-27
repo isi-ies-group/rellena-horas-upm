@@ -29,6 +29,8 @@ exc_fin = datetime.strptime(EXCLUYE_FIN, "%d/%m/%Y")
 DIAS_EXCLUIR = [(exc_ini + timedelta(days=x)).strftime("%d/%m/%Y") for x in range(0, (exc_fin-exc_ini).days)]
 # DIAS_EXCLUIR = ['02/03/2020', '03/03/2020'] # excluir días sueltos
 
+INICIALIZAR_DIAS = True # pone a cero las horas de días disponibles antes de repartir las horas ahora
+
 # %% CONSTANTES
 # fijar la semilla del random permite reproducir siempre el mismo patrón aleatorio
 np.random.seed(123)
@@ -81,11 +83,13 @@ if len(lista_horas_otros_proyectos)*HORAS_DIA_MAX - sum(lista_horas_otros_proyec
     raise SystemError('Más horas en tareas que horas disponibles!')
 
 # %% Inicializa a 0 todas las tareas de todos los días laborables
-# OJO PONE A CERO DÍAS BLOQUEADAS QUE YA CONTUVIESEN DÍAS
-# for celda_dia in hoja[f'{COL_INI_TAREA}{FILA_INI_TAREAS}:B{NUM_FILAS}']:
-#     dia = celda_dia[0].row
-#     for tarea in range(OFFSET_COLUMNA_TAREA, COL_OTRAS_IDX):
-#         hoja[f'{openpyxl.utils.get_column_letter(tarea)}{dia}'].value = 0
+if INICIALIZAR_DIAS:
+    for dia in hoja[f'{COL_INI_TAREA}{FILA_INI_TAREAS}:B{NUM_FILAS}']:
+        for celda in dia:
+            if celda.fill.fgColor.indexed == COLOR_DISPONIBLE:
+                for tarea in range(OFFSET_COLUMNA_TAREA, COL_OTRAS_IDX):
+                    hoja[f'{openpyxl.utils.get_column_letter(tarea)}{dia[0].row}'].value = 0
+
 
 # %% Rellena la hoja con horas en las tareas
 horas_task_ahora = HORAS_TASK.copy()
@@ -95,18 +99,18 @@ lista_filas_random = np.array(lista_filas)
 np.random.shuffle(lista_filas_random)
 
 while horas_task_ahora.sum() > 0:
-    for dia in lista_filas_random:
+    for num_dia in lista_filas_random:
         for tarea in range(OFFSET_COLUMNA_TAREA, COL_OTRAS_IDX):
 
-            horas_proyectos_ahora = hoja[f'{COL_INI_TAREA}{dia}:{COL_FIN_TAREA}{dia}']
+            horas_proyectos_ahora = hoja[f'{COL_INI_TAREA}{num_dia}:{COL_FIN_TAREA}{num_dia}']
             total_proyectos_ahora = sum([c.value for c in list(horas_proyectos_ahora[0])])
 
-            total_otros_proyectos = hoja[f'{COL_OTRAS_TAREAS}{dia}'].value
+            total_otros_proyectos = hoja[f'{COL_OTRAS_TAREAS}{num_dia}'].value
 
             horas_libres_dia = HORAS_DIA_MAX - total_proyectos_ahora - total_otros_proyectos
 
             if horas_libres_dia > 0 and horas_task_ahora[tarea-OFFSET_COLUMNA_TAREA] > 0:
-                hoja[f'{openpyxl.utils.get_column_letter(tarea)}{dia}'].value += MINIMA_CARGA_HORARIA
+                hoja[f'{openpyxl.utils.get_column_letter(tarea)}{num_dia}'].value += MINIMA_CARGA_HORARIA
                 horas_task_ahora[tarea-OFFSET_COLUMNA_TAREA] -= MINIMA_CARGA_HORARIA
 
 # %% Guarda en copia
