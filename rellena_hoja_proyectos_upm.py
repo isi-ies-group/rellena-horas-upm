@@ -10,19 +10,19 @@ from datetime import datetime, timedelta
 import numpy as np
 
 # %% ENTRADAS
-nombre_archivo = 'fichero_prueba.xlsx'
+nombre_archivo = '2025-02-03_1300_carga_horas_2023_c-FIVe.xlsx'
 
 # array de tamaño NUM_TAREAS indicando el número de horas de cada tarea a asignar
-HORAS_TASK = np.array([0, 0, 12, 12, 24, 12, 0, 0, 0, 24, 12, 12, 12])
+HORAS_TASK = np.array([0, 0, 0, 0, 0, 0, 50, 0, 50, 0])
 # OJO han de ser floats (terminados con .0), se fuerza con astype()
 HORAS_TASK = HORAS_TASK.astype('float')
 
 # meses en los cuales se imputan horas a las tareas
-MESES_IMPUTAR = [True, True, True, True, True, True, True, True, True, True, True, True]
+MESES_IMPUTAR = [True, True, True, True, True, True, True, False, True, True, True, True]
 
 # lista días laborables a excluir
 EXCLUYE_INI = '01/01/2020'
-EXCLUYE_FIN = '01/03/2020'
+EXCLUYE_FIN = '01/01/2020'
 
 exc_ini = datetime.strptime(EXCLUYE_INI, "%d/%m/%Y")
 exc_fin = datetime.strptime(EXCLUYE_FIN, "%d/%m/%Y")
